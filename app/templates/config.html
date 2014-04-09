@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Start -->
+<div class="code-block">hostname {{hostname}}
+ip domain name company.org
+username admin privilege 15 secret 5 XXXXXXXXXXXXXXXXXXXXXXXXXXX
+enable secret 5 XXXXXXXXXXXXXXXXXXXXXXXXXXX
+banner login X
+--------------------------------------------------------
+                --==== MY COMPANY ====--
+--------------------------------------------------------
+X
+
+ip tcp path-mtu-discovery
+ip cef
+ip source-route
+ip forward-protocol nd
+service password-encryption
+service sequence-numbers
+service tcp-keepalives-in
+service tcp-keepalives-out
+crypto key generate rsa general-keys modulus 1024
+ip ssh time-out 60
+ip ssh authentication-retries 4
+ip ssh version 2
+login block-for 60 attempts 3 within 30
+login delay 5
+
+no service pad
+no cdp run
+no ipv6 cef
+no ip dhcp excluded-address 10.10.10.1
+no ip dhcp pool ccp-pool
+no ip domain lookup
+no ip http server
+no ip http secure-server
+no ip http access-class 23
+no ip http authentication local
+no access-list 23 permit 10.10.10.0 0.0.0.7
+ip arp proxy disable
+ip arp gratuitous none
+
+line con 0
+ login local
+line vty 0 4
+ transport input telnet ssh
+ escape-character 3
+ no access-class 23 in
+ no privilege level 15
+</div>
+ 
+{% if chk_ipsec %}
+<!-- IPSec -->
+<div class="code-block">crypto isakmp policy 2
+ encr aes 256
+ authentication pre-share
+ group 14
+ lifetime 86400
+ hash sha
+
+crypto isakmp policy 20
+ encr 3des
+ authentication pre-share
+ lifetime 1200
+
+crypto isakmp key {{tunnel_pass}} address {{tunnel_dest}}
+crypto isakmp keepalive 300 5
+crypto ipsec security-association lifetime seconds 1200
+
+crypto ipsec transform-set ESP-3DES-SHA esp-3des esp-sha-hmac
+crypto ipsec transform-set ESP-AES128-SHA esp-aes 128 esp-sha-hmac
+crypto ipsec transform-set ESP-AES256-SHA esp-aes 256 esp-sha-hmac
+
+crypto ipsec profile TUNNEL_IPSEC_3DES
+ set transform-set ESP-3DES-SHA 
+ set security-association lifetime seconds 3600
+ no set security-association lifetime kilobytes
+ no set security-association idle-time
+ no set security-association replay window-size
+
+crypto ipsec profile TUNNEL_IPSEC_AES128
+ set transform-set ESP-AES128-SHA
+ set security-association lifetime seconds 3600
+ no set security-association lifetime kilobytes
+ no set security-association idle-time
+ no set security-association replay window-size
+
+crypto ipsec profile TUNNEL_IPSEC_AES256
+ set transform-set ESP-AES256-SHA
+ set security-association lifetime seconds 3600
+ no set security-association lifetime kilobytes
+ no set security-association idle-time
+ no set security-association replay window-size
+
+interface {{tunnel_iface}}
+ description Tunnel to CO over OUTSIDE
+ ip address {{tunnel_ip}} {{tunnel_mask}}
+ tunnel source {% if radio_wan == 'static' %}{{wan_iface}}{% else %}{{dialer_iface}}{% endif %}
+ tunnel mode ipsec ipv4
+ tunnel destination {{tunnel_dest}}
+ tunnel protection ipsec profile TUNNEL_IPSEC_AES256
+ </div>
+{% endif %}
+
+{% if chk_lan %}
+<!-- LAN -->
+<div class="code-block">interface {{lan_iface}}
+ description INSIDE
+ ip address {{lan_ip}} {{lan_mask}}
+</div>
+{% endif %}
+
+{% if radio_wan == 'static' %}
+<!-- WAN static -->
+<div class="code-block">interface {{wan_iface}}
+ description OUTSIDE
+ ip address {{wan_ip}} {{wan_mask}}
+ no ip redirects
+ no ip unreachables
+ no ip proxy-arp
+
+ip route 0.0.0.0 0.0.0.0 {{wan_gw}}
+</div>
+{% else %}
+<!-- WAN PPPoE -->
+<div class="code-block">interface {{wan_iface}}
+ description FOR DIALER1
+ pppoe enable group global
+ pppoe-client dial-pool-number 1
+
+interface {{dialer_iface}}
+ description OUTSIDE
+ mtu 1492
+ ip address negotiated
+ encapsulation ppp
+ no ip route-cache cef
+ no ip route-cache
+ dialer pool 1
+ dialer idle-timeout 0
+ dialer hold-queue 100
+ dialer persistent
+ dialer-group 1
+ ppp authentication pap chap callin
+ ppp chap hostname {{pppoe_login}}
+ ppp chap password {{pppoe_pass}}
+ ppp pap sent-username {{pppoe_login}} password {{pppoe_pass}}
+ no cdp enable
+ no ip redirects
+ no ip unreachables
+ no ip proxy-arp
+
+ip route 0.0.0.0 0.0.0.0 {{dialer_iface}}
+</div>
+{% endif %}
+
+{% if chk_acl_make %}
+<!-- Make ACL -->
+<div class="code-block">ip access-list extended INET-IN
+ permit icmp any any echo
+ permit icmp any any echo-reply
+ permit icmp any any time-exceeded
+ permit icmp any any administratively-prohibited
+ permit icmp any any packet-too-big
+ permit icmp any any traceroute
+ permit icmp any any unreachable
+ permit ip host {{tunnel_dest}} host {{wan_ip}}
+ip access-list extended INET-OUT
+ permit ip host {{wan_ip}} any
+</div>
+{% endif %}
+
+{% if chk_acl_apply %}
+<!-- Apply ACL -->
+<div class="code-block">interface {% if radio_wan == 'static' %}{{wan_iface}}{% else %}{{dialer_iface}}{% endif %}
+ ip access-group INET-IN in
+ ip access-group INET-OUT out
+</div>
+{% endif %}
+
+{% if chk_proc %}
+<!-- Route to proccessing -->
+<div class="code-block">ip route 10.0.0.5 255.255.255.255 {{tunnel_iface}}
+</div>
+{% endif %}
+
+{% if chk_logs %}
+<!-- Logs -->
+<div class="code-block">logging userinfo
+logging buffered 51200
+logging message-counter syslog
+logging trap inf
+logging console errors
+logging monitor errors
+logging host 10.0.0.5 transport udp port 10000
+archive
+ log config
+ logging enable
+ logging size 300
+ hidekeys
+</div>
+{% endif %}
+
+{% if chk_snmp %}
+<!-- SNMP -->
+<div class="code-block">access-list 22 permit 10.0.0.5
+access-list 22 permit 10.0.0.6
+access-list 33 permit 10.0.0.6
+snmp-server community XXXXXXX RO 22
+snmp-server community XXXXXXX RW 33
+snmp-server host 10.0.0.6 XXXXXXX
+snmp-server ifindex persist
+snmp-server enable traps snmp authentication linkdown coldstart warmstart
+snmp-server enable traps tty
+snmp-server enable traps eigrp
+snmp-server enable traps envmon
+snmp-server enable traps pppoe
+</div>
+{% endif %}
+
+{% if chk_tacacs %}
+<!-- TACACS+ -->
+<div class="code-block">ip tacacs source-interface {{lan_iface}}
+tacacs-server host 10.0.0.5
+tacacs-server host 10.0.0.6
+tacacs-server directed-request
+tacacs-server key 7 XXXXXXXXXXXXXXXXXXXXXXXXXXX
+</div>
+{% endif %}
+
+{% if chk_eigrp and chk_ipsec %}
+<!-- EIGRP -->
+<div class="code-block">access-list 9 permit 10.0.0.0 0.0.0.255
+router eigrp 100
+ distribute-list 9 out connected
+ no default-information in
+ no default-information out
+ network 10.0.0.0
+ redistribute connected
+ passive-interface default
+ no passive-interface {{tunnel_iface}}
+</div>
+{% endif %}
+
+{% if chk_aaa %}
+<!-- AAA -->
+<div class="code-block">aaa new-model
+{% if chk_tacacs %}
+aaa authentication login default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+aaa authorization console
+aaa authorization config-commands
+aaa authorization exec default group tacacs+ local 
+aaa authorization commands 5 default group tacacs+ local 
+aaa authorization commands 15 default group tacacs+ local{% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,166 @@
+body {
+ margin: 0px;
+ font-family: Helvetica;
+ color: #505050;
+ background: #fafafa;
+}
+
+.body {
+ margin: 20px;
+}
+
+h1 {
+ margin: 4px 2px;
+ font-size: 18px;
+ font-weight: bold;
+}
+
+.block {
+ padding: 10px;
+ width: 642px;
+ height: 470px;
+ border: 1px solid #cccccc;
+ border-radius: 3px;
+ box-shadow: 0 0 3px 2px #e8e8e8; 
+ background: #ffffff;
+}
+
+.subblock-left {
+ float: left;
+ padding: 3px;
+ margin-right: 50px;
+ margin-bottom: 5px;
+ width: 290px;
+}
+
+.subblock-right {
+ float: left;
+ padding: 3px;
+ width: 290px;
+}
+
+.subblock-chk {
+ float: left;
+ margin-bottom: 5px;
+ padding: 5px 0px;
+ width: 640px;
+ text-align: justify;
+ border-top: 1px solid #cccccc;
+}
+
+.subblock-button {
+ float: left;
+ margin-bottom: 5px;
+ padding: 5px 0px;
+ width: 640px;
+ text-align: center;
+ border-top: 1px solid #cccccc;
+}
+
+.code-block {
+ float: none;
+ margin-bottom: 10px;
+ padding: 5px;
+ width: 640px;
+ white-space: pre-wrap;
+ border: 1px dashed #cccccc; 
+ background: #f3f3f3;
+}
+
+.field-name {
+ float: left;
+ padding-top: 15px;
+ padding-left: 5px;
+ width: 110px;
+ text-align: left;
+ font-size: 10px;
+ color: #707070;
+}
+
+.chk-name {
+ float: left;
+ margin: 2px;
+ padding-top: 4px;
+ padding-left: 3px;
+ width: 78px;
+ height: 20px;
+ text-align: left;
+ font-size: 10px;
+ color: #707070;
+}
+
+label {
+ float: left;
+ margin: 2px 20px 2px 2px;
+ padding-top: 4px;
+ padding-left: 3px;
+ width: 60px;
+ height: 20px;
+ text-align: left;
+ font-size: 10px;
+ color: #707070;
+}
+
+.tip {
+ float: left;
+ text-align: left;
+ font-size: 10px;
+ color: #707070;
+}
+
+input {
+ margin: 2px 2px 4px 2px;
+ padding: 8px;
+ width: 170px;
+ height: 35px;
+ font-size: 12px;
+ border: 1px solid #cccccc;
+ border-radius: 3px;
+ background: #f9f9f9;
+}
+
+input[disabled] {
+ color: #c5c5c5;
+ background: #c5c5c5;
+}
+
+input[disabled]::-webkit-input-placeholder {
+ color: #c5c5c5;
+}
+
+input.checkbox {
+ float: left;
+ margin-top: 4px;
+ height: 16px;
+ width: 16px;
+}
+
+input.radio {
+ float: left;
+ margin-top: 4px;
+ height: 16px;
+ width: 16px;
+}
+
+input.button {
+ margin-top: 10px;
+ width: 70px;
+ cursor: pointer;
+ color: #ffffff;
+ font-weight: bold;
+ text-shadow: 0 -1px 0 #336895;
+ font-size: 13px;
+ border: 1px solid #336895;
+ border-radius: 3px;
+ box-shadow: inset 0 1px 0 #8dc2f0;
+ background: -webkit-linear-gradient(bottom, #4889c2 0%, #5ba7e9 100%);
+}
+
+input.button:hover {
+ background: -webkit-linear-gradient(bottom, #5c96c9 0%, #6bafea 100%);
+}
+
+input.button:active {
+ background: -webkit-linear-gradient(bottom, #5ba7e9 0%, #4889c2 100%);
+ box-shadow: inset 0 0 2px rgba(0,0,0, .3) 0 1px 0 #ffffff;
+}

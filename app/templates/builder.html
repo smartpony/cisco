@@ -1,0 +1,83 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Builder</h1>
+
+<form action="" method="POST" onSubmit="return ValidateForm()">
+    <div class="block">
+        <div class="subblock-left">
+            <div class="field-name" title="Имя хоста">Hostname</div>
+            {{form.hostname(value="gw-office10", onKeyUp="ValidateInput(this)", title="Имя хоста")}}
+            <div class="field-name" title="Имя интерфейса для локальной сети">LAN interface</div>
+            {{form.lan_iface(value="FastEthernet0/1", onKeyUp="ValidateInput(this)", title="Имя интерфейса для локальной сети")}}
+            <div class="field-name" title="Адрес интерфейса для локальной сети">LAN IP</div>
+            {{form.lan_ip(value="10.50.20.1", onKeyUp="ValidateInput(this)", title="Адрес интерфейса для локальной сети")}}
+            <div class="field-name" title="Маска локальной сети">LAN mask</div>
+            {{form.lan_mask(value="255.255.255.0", onKeyUp="ValidateInput(this)", title="Маска локальной сети")}}
+            <div class="field-name" title="Имя внешнего интерфейса">WAN interface</div>
+            {{form.wan_iface(value="FastEthernet0/0", onKeyUp="ValidateInput(this)", title="Имя внешнего интерфейса")}}
+            <div class="field-name" title="Адрес внешнего интерфейса">WAN IP</div>
+            {{form.wan_ip(value="200.1.1.2", onKeyUp="ValidateInput(this)", title="Адрес внешнего интерфейса")}}
+            <div class="field-name" title="Маска внешнего интерфейса">WAN mask</div>
+            {{form.wan_mask(value="255.255.255.252", onKeyUp="ValidateInput(this)", title="Маска внешнего интерфейса")}}
+            <div class="field-name" title="Шлюз по умолчанию (будет прописан в дефолтный маршрут)">WAN GW</div>
+            {{form.wan_gw(value="200.1.1.1", onKeyUp="ValidateInput(this)", title="Шлюз по умолчанию (будет прописан в дефолтный маршрут)")}}
+        </div>
+        
+        <div class="subblock-right">
+            <div class="field-name" title="Имя PPPoE-интерфейса (физика берётся из поля WAN interface)">Dialer interface</div>
+            {{form.dialer_iface(value="Dialer1", onKeyUp="ValidateInput(this)", title="Имя PPPoE-интерфейса (физика берётся из поля WAN interface)", disabled="True")}}
+            <div class="field-name" title="Логин PPPoE">PPPoE login</div>
+            {{form.pppoe_login(value="login_pppoe", onKeyUp="ValidateInput(this)", title="Логин PPPoE", disabled="True")}}
+            <div class="field-name" title="Пароль PPPoE">PPPoE password</div>
+            {{form.pppoe_pass(value="QWERTY", onKeyUp="ValidateInput(this)", title="Пароль PPPoE", disabled="True")}}
+            <div class="field-name" title="Имя туннеля">Tunnel interface</div>
+            {{form.tunnel_iface(value="Tunnel105001", onKeyUp="ValidateInput(this)", title="Имя туннеля")}}
+            <div class="field-name" title="Пароль для аутентификации через preshared key">Tunnel password</div>
+            {{form.tunnel_pass(value="QWERTY", onKeyUp="ValidateInput(this)", title="Пароль для аутентификации через preshared key")}}
+            <div class="field-name" title="Адрес локального конца туннеля">Tunnel IP</div>
+            {{form.tunnel_ip(value="10.255.50.2", onKeyUp="ValidateInput(this)", title="Адрес локального конца туннеля")}}
+            <div class="field-name" title="Маска подсети для концов туннеля">Tunnel mask</div>
+            {{form.tunnel_mask(value="255.255.255.252", onKeyUp="ValidateInput(this)", title="Маска подсети для концов туннеля")}}
+            <div class="field-name" title="Удалённый внешний адрес для туннеля">Tunnel destination</div>
+            {{form.tunnel_dest(value="100.1.1.2", onKeyUp="ValidateInput(this)", title="Удалённый внешний адрес для туннеля")}}
+        </div>
+        
+        <div class="subblock-chk">
+            {{radio_wan[0](class="radio", onClick="DisableInputWAN(false, true)", checked="True")}}
+            {{radio_wan[0].label(title="Внешний интерфейс будет настроен с использованием статического адреса")}}
+            {{form.chk_lan(class="checkbox", onClick="DisableInput(this, ['lan_iface', 'lan_ip', 'lan_mask'])", title="Настройка интерфейса локальной сети", checked="True")}}
+            <div class="chk-name" title="Настройка интерфейса локальной сети">LAN</div>
+            {{form.chk_ipsec(class="checkbox", onClick="DisableChk(this); DisableInput(this, ['tunnel_iface', 'tunnel_pass', 'tunnel_ip', 'tunnel_mask', 'tunnel_dest'])", title="Настройка криптопрофилей, preshared key и туннельного интерфейса", checked="True")}}
+            <div class="chk-name" title="Настройка криптопрофилей, preshared key и туннельного интерфейса">IPSec</div>
+            {{form.chk_eigrp(class="checkbox", title="Включение EIGRP (не работает без IPSec)", checked="True")}}
+            <div class="chk-name" title="Включение EIGRP (не работает без IPSec)">EIGRP</div>
+            {{form.chk_logs(class="checkbox", title="Включение логов", checked="True")}}
+            <div class="chk-name" title="Включение логов">Logs</div>
+            {{form.chk_create_acl(class="checkbox", onClick="DisableChk(this)", title="Создание аксесс-листов INET-IN и INET-OUT", checked="True")}}
+            <div class="chk-name" title="Создание аксесс-листов INET-IN и INET-OUT">Создать ACL</div>
+
+            {{radio_wan[1](class="radio", onClick="DisableInputWAN(true, false)")}}
+            {{radio_wan[1].label(title="Внешний интерфейс будет настроен через PPPoE")}}
+            {{form.chk_aaa(class="checkbox", title="Включение AAA-модели", checked="True")}}
+            <div class="chk-name" title="Включение AAA-модели">AAA</div>
+            {{form.chk_tacacs(class="checkbox", title="Включение TACACS+", checked="True")}}
+            <div class="chk-name" title="Включение TACACS+">TACACS+</div>
+            {{form.chk_snmp(class="checkbox", title="Включение SNMP", checked="True")}}
+            <div class="chk-name" title="Включение SNMP">SNMP</div>
+            {{form.chk_proc(class="checkbox", title="Настройка статического маршрута до 10.0.0.5", checked="True")}}
+            <div class="chk-name" title="Настройка статического маршрута до 10.0.0.5">10.0.0.5</div>
+            {{form.chk_apply_acl(class="checkbox", title="Применение созданных ACL на WAN-интерфейс (не работает без 'Создать ACL')", checked="True")}}
+            <div class="chk-name" title='Применение созданных ACL на внешний интерфейс (не работает без "Создать ACL")'>Применить ACL</div>
+        </div>
+        
+        <div class="subblock-button">
+            <input type="submit" class="button" value="ok">
+        </div>
+    </div>
+</form>
+
+<div id="tip" class="tip">Примечание: все активные поля обязательны для заполнения.</div>
+
+{% endblock %}
